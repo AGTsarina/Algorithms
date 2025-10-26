@@ -82,7 +82,7 @@ public:
         // используем алгоритм Беллмана-Форда
         // В противном случае можно инициализировать нулями
         if (negative_costs) {
-            beintman_ford(s);
+            bellman_ford(s);
         }
         
         while (total_flow < max_flow) {
@@ -146,3 +146,4 @@ int main() {
     return 0;
 
 }
+
