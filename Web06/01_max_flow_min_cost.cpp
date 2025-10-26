@@ -33,7 +33,7 @@ public:
         graph[to].push_back({from, (int)graph[from].size()-1, 0, -cost, 0});
     }
     
-    void beintman_ford(int s) {
+    void bellman_ford(int s) {
         fill(pot.begin(), pot.end(), INF);
         pot[s] = 0;
         for (int i = 0; i < n-1; i++) {
@@ -144,4 +144,5 @@ int main() {
     cout << "Минимальная стоимость: " << min_cost << endl;
     
     return 0;
+
 }
