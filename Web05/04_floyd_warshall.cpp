@@ -9,28 +9,9 @@ using namespace std;
 
 const int INF = INT_MAX;
 
-struct Route {
-    int base_cost;
-    int max_weight;
-    bool has_customs;
-    bool is_express;
-    bool seasonal_increase;
-};
-
-// Функция для вычисления стоимости маршрута с учетом всех факторов
-int calculateRouteCost(const Route& route, int weight) {
-    if (weight > route.max_weight) return INF;
-    
-    int cost = route.base_cost;
-    if (route.has_customs) cost += 500;
-    if (route.seasonal_increase) cost = ceil(cost * 1.2);
-    return cost;
-}
-
-void floydWarshallWithConstraints(vector<vector<int>>& dist, 
-                                 vector<vector<int>>& next, 
-                                 const vector<vector<Route>>& graph, 
-                                 int required_weight) {
+void floydWarshall(vector<vector<int>>& dist, 
+                vector<vector<int>>& next, 
+                const vector<vector<int>>& graph) {
     int n = dist.size();
     
     // Инициализация матриц
@@ -39,10 +20,9 @@ void floydWarshallWithConstraints(vector<vector<int>>& dist,
             if (i == j) {
                 dist[i][j] = 0;
                 next[i][j] = j;
-            } else {
-                int cost = calculateRouteCost(graph[i][j], required_weight);
-                dist[i][j] = cost;
-                if (cost < INF) {
+            } else {                
+                dist[i][j] = graph[i][j];
+                if (dist[i][j] < INF) {
                     next[i][j] = j;
                 } else {
                     next[i][j] = -1;
@@ -78,69 +58,49 @@ vector<int> reconstructPath(int i, int j, const vector<vector<int>>& next) {
     return path;
 }
 
-int main() {
-    // Сопоставление кодов городов с их номерами
-    map<string, int> cityCodes = {
-        {"MOW", 0}, // Москва
-        {"LED", 1}, // Санкт-Петербург
-        {"AER", 2}, // Сочи
-        {"SVX", 3}, // Екатеринбург
-        {"OVB", 4}, // Новосибирск
-        {"VVO", 5}  // Владивосток
-    };
-    
-    // Сопоставление номеров городов с их названиями
-    vector<string> cityNames = {
-        "Москва (MOW)",
-        "Санкт-Петербург (LED)",
-        "Сочи (AER)",
-        "Екатеринбург (SVX)",
-        "Новосибирск (OVB)",
-        "Владивосток (VVO)"
-    };
-    
-    int n = 6; // количество городов
+int main() {  
+    int n = 6; // количество вершин
     int required_weight = 4; // требуемый вес груза в тоннах
     
     // Матрица маршрутов (n x n)
-    vector<vector<Route>> graph(n, vector<Route>(n, {INF, 0, false, false, false}));
+    vector<vector<int>> graph(n, vector<int>(n, INF));
     
     // Заполнение матрицы маршрутов
-    graph[cityCodes["MOW"]][cityCodes["LED"]] = {1000, 5, false, false, false};
-    graph[cityCodes["MOW"]][cityCodes["AER"]] = {2500, 3, false, false, false};
-    graph[cityCodes["MOW"]][cityCodes["SVX"]] = {3500, 10, false, false, false};
+    graph[0][1] = 15;
+    graph[0][2] = 3;
+    graph[0][3] = 10;
     
-    graph[cityCodes["LED"]][cityCodes["AER"]] = {4000, 2, false, false, false};
-    graph[cityCodes["LED"]][cityCodes["SVX"]] = {4500, 4, false, false, false};
+    graph[1][2] = 2;
+    graph[1][3] = 4;
     
-    graph[cityCodes["AER"]][cityCodes["SVX"]] = {3000, 3, true, false, false};
-    graph[cityCodes["AER"]][cityCodes["OVB"]] = {7000, 5, false, false, true};
+    graph[2][3] = 3;
+    graph[2][4] = 5;
     
-    graph[cityCodes["SVX"]][cityCodes["OVB"]] = {2000, 8, false, false, false};
-    graph[cityCodes["SVX"]][cityCodes["VVO"]] = {12000, 6, false, false, false};
+    graph[3][4] = 8;
+    graph[3][5] = 6;
     
-    graph[cityCodes["OVB"]][cityCodes["VVO"]] = {9000, 7, false, true, false};
+    graph[4][5] = 7;
     
     // Матрицы для алгоритма Флойда-Уоршелла
     vector<vector<int>> dist(n, vector<int>(n, INF));
     vector<vector<int>> next(n, vector<int>(n, -1));
     
     // Выполнение алгоритма
-    floydWarshallWithConstraints(dist, next, graph, required_weight);
+    floydWarshall(dist, next, graph);
     
     // Вывод результатов
-    cout << "Матрица минимальной стоимости доставки для всех пар городов (груз " << required_weight << " т):\n\n";
+    cout << "Матрица минимальной стоимости доставки:\n\n";
     
     // Заголовок таблицы
     cout << "Из\\В\t";
     for (int j = 0; j < n; j++) {
-        cout << cityNames[j].substr(0, 10) << "\t";
+        cout << j << "\t";
     }
     cout << "\n";
     
     // Данные таблицы
     for (int i = 0; i < n; i++) {
-        cout << cityNames[i].substr(0, 10) << "\t";
+        cout << i << "\t";
         for (int j = 0; j < n; j++) {
             if (dist[i][j] == INF) {
                 cout << "INF\t";
@@ -154,49 +114,16 @@ int main() {
     // Примеры маршрутов
     cout << "\n--- Примеры оптимальных маршрутов ---\n";
     
-    // Москва -> Владивосток
-    vector<int> path = reconstructPath(cityCodes["MOW"], cityCodes["VVO"], next);
+    // 0 -> 5
+    vector<int> path = reconstructPath(0, 5, next);
     if (!path.empty()) {
-        cout << "Москва → Владивосток: " << dist[cityCodes["MOW"]][cityCodes["VVO"]] << " руб.\n";
+        cout << "0 → 5: " << dist[0][5] << "\n";
         cout << "Маршрут: ";
         for (size_t i = 0; i < path.size(); i++) {
             if (i > 0) cout << " → ";
-            cout << cityNames[path[i]];
+            cout << path[i];
         }
         cout << "\n";
-    }
-    
-    // Санкт-Петербург -> Новосибирск
-    path = reconstructPath(cityCodes["LED"], cityCodes["OVB"], next);
-    if (!path.empty()) {
-        cout << "\nСанкт-Петербург → Новосибирск: " << dist[cityCodes["LED"]][cityCodes["OVB"]] << " руб.\n";
-        cout << "Маршрут: ";
-        for (size_t i = 0; i < path.size(); i++) {
-            if (i > 0) cout << " → ";
-            cout << cityNames[path[i]];
-        }
-        cout << "\n";
-    }
-    
-    // Анализ для разных весов
-    cout << "\n--- Анализ для разных весов груза ---\n";
-    vector<int> test_weights = {2, 4, 6, 8};
-    
-    for (int weight : test_weights) {
-        cout << "\nДля груза " << weight << " т:\n";
-        
-        // Пересчитываем матрицу для текущего веса
-        vector<vector<int>> dist_weight(n, vector<int>(n, INF));
-        vector<vector<int>> next_weight(n, vector<int>(n, -1));
-        floydWarshallWithConstraints(dist_weight, next_weight, graph, weight);
-        
-        // Проверяем доступность Владивостока из Москвы
-        if (dist_weight[cityCodes["MOW"]][cityCodes["VVO"]] == INF) {
-            cout << "  Москва → Владивосток: недостижим\n";
-        } else {
-            cout << "  Москва → Владивосток: " << dist_weight[cityCodes["MOW"]][cityCodes["VVO"]] << " руб.\n";
-        }
-    }
-    
+    }        
     return 0;
 }
