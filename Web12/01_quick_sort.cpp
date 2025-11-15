@@ -4,11 +4,11 @@ using namespace std;
 
 pair<int*, int*> partition(int* left, int* right){
   auto length = right - left;
-  int* middle = left + length / 2;
+  int middle = *(left + length / 2);
   int* forward = left, *backward = right;
   do{
-    while(*forward < *middle) forward++;
-    while(*backward > *middle) backward--;
+    while(*forward < middle) forward++;
+    while(*backward > middle) backward--;
     if (forward <= backward){
       swap(*forward, *backward);
       forward++; backward--;
